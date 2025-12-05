@@ -1,0 +1,43 @@
+{
+  "download:metube": {
+    "metube_url": "http://localhost:8081/",
+    "default_quality": "best",
+    "download_path": "/downloads"
+  },
+  "search:seacms": {
+    "resource_sites_list": [
+      {
+        "name": "示例资源站",
+        "api_url": "https://example.com/api.php/provide/vod/at/xml",
+        "enabled": true,
+        "url_suffix": ""
+      }
+    ],
+    "only_m3u8": true,
+    "use_proxy": false,
+    "proxy_url": "",
+    "timeout": 30
+  },
+  "parser:m3u8": {
+    "parsers_list": [
+      {
+        "name": "示例解析器",
+        "parser_url": "https://example.com/parse/?url=",
+        "enabled": true
+      }
+    ]
+  },
+  "download:qbittorrent": {
+    "_enabled": false,
+    "qb_url": "http://localhost:8080/",
+    "username": "admin",
+    "password": "adminadmin"
+  },
+  "search:youtube": {
+    "_enabled": false,
+    "api_key": "YOUR_YOUTUBE_API_KEY",
+    "max_results": 10,
+    "use_proxy": false,
+    "proxy_url": ""
+  }
+}
