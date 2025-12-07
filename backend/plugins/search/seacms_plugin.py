@@ -116,7 +116,7 @@ class SeaCMSSearchPlugin(SearchPlugin):
                 title = video.findtext('name', '')
                 pic = video.findtext('pic', '')
                 note = video.findtext('note', '')
-                desc = video.findtext('des', '')  # 获取描述字段
+                desc = video.findtext('des', '') or ''  # 获取描述字段，确保是字符串
                 
                 # 解析播放地址
                 dl_node = video.find('dl')
@@ -165,7 +165,9 @@ class SeaCMSSearchPlugin(SearchPlugin):
                 main_url = episodes[0]['play_url'] if episodes else ''
                 
                 # 生成简短描述（取前100字符）
-                short_desc = (desc[:100] + '...') if len(desc) > 100 else desc
+                # 确保 desc 是字符串类型
+                desc_str = str(desc) if desc else ''
+                short_desc = (desc_str[:100] + '...') if len(desc_str) > 100 else desc_str
                 
                 results.append(SearchResult(
                     title=title,
@@ -174,9 +176,9 @@ class SeaCMSSearchPlugin(SearchPlugin):
                     platform=site_name,
                     description=short_desc,  # 简短描述用于列表展示
                     metadata={
-                        'video_id': video_id,
-                        'note': note,
-                        'full_description': desc,  # 完整描述用于详情浮窗
+                        'video_id': str(video_id) if video_id else '',  # 确保是字符串
+                        'note': str(note) if note else '',  # 确保是字符串
+                        'full_description': desc_str,  # 完整描述用于详情浮窗
                         'episodes': episodes,
                         'episode_count': len(episodes),
                         'has_m3u8': len(m3u8_urls) > 0,
