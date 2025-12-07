@@ -45,9 +45,38 @@ python logs.py all
 
 ## 常见问题
 
-### 1. 前端服务启动后立即停止
+### 1. 前端端口配置未生效
 
-**症状**: 运行 `python status.py` 显示前端服务已停止
+**症状**: 
+- 前端日志显示监听在 5173 端口，但配置的是其他端口
+- `status.py` 显示前端已停止，但实际在运行
+
+**原因**: 
+- Vite 配置未读取环境变量
+- 进程检测方法不可靠
+
+**解决方法**:
+
+```bash
+# 1. 停止服务
+python stop.py
+
+# 2. 快速更新配置
+python update_config.py frontend.port=10016 backend.port=11000
+
+# 3. 重新启动
+python start.py
+
+# 4. 验证
+python status.py
+python logs.py frontend
+```
+
+详细说明: [fix_frontend_port.md](fix_frontend_port.md)
+
+### 2. 前端服务启动后立即停止
+
+**症状**: 运行 `python status.py` 显示前端服务已停止，且日志为空
 
 **排查步骤**:
 

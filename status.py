@@ -40,10 +40,26 @@ def check_process(pid):
             )
             return str(pid) in result.stdout
         else:
+            # Linux/Mac: 检查进程是否存在
+            # 使用 /proc 文件系统（更可靠）
+            if os.path.exists(f'/proc/{pid}'):
+                return True
+            # 备用方法：使用 kill -0
+            try:
+                os.kill(pid, 0)
+                return True
+            except ProcessLookupError:
+                return False
+            except PermissionError:
+                # 进程存在但没有权限，说明进程在运行
+                return True
+    except Exception as e:
+        # 如果出错，尝试备用方法
+        try:
             os.kill(pid, 0)
             return True
-    except:
-        return False
+        except:
+            return False
 
 def main():
     """主函数"""
