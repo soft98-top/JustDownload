@@ -14,7 +14,35 @@
 
 ## 快速开始
 
-### 方式一：Docker 部署（推荐）
+### 方式一：配置化部署（推荐 ⭐）
+
+支持灵活配置，适用于本地、局域网、公网等多种场景。
+
+```bash
+# 1. 创建配置文件
+cp config.json.example config.json
+
+# 2. 启动服务（后台运行）
+python start.py
+
+# 3. 访问系统
+# 前端: http://localhost:5173
+# 后端: http://localhost:8000
+```
+
+**管理命令:**
+```bash
+python status.py  # 查看服务状态
+python stop.py    # 停止所有服务
+```
+
+**或使用便捷脚本:**
+- Windows: `start.bat`, `stop.bat`, `status.bat`
+- Linux/Mac: `./start.sh`, `./stop.sh`, `./status.sh`
+
+📖 详细说明: [快速开始指南](QUICKSTART_NEW.md) | [部署指南](README_DEPLOYMENT.md)
+
+### 方式二：Docker 部署
 
 使用 Docker Compose 一键部署：
 
@@ -28,22 +56,22 @@ docker-compose up -d
 
 详细说明请查看 [Docker 部署指南](DOCKER_DEPLOYMENT.md)
 
-### 方式二：一键启动脚本
+### 方式三：传统启动脚本
 
 **Linux/Mac:**
 ```bash
 chmod +x install_dependencies.sh start_all.sh
 ./install_dependencies.sh  # 首次运行
-./start_all.sh            # 启动服务
+./start_all.sh            # 启动服务（前台运行）
 ```
 
 **Windows:**
 ```cmd
 install_dependencies.bat  # 首次运行
-start_all.bat            # 启动服务
+start_all.bat            # 启动服务（前台运行）
 ```
 
-### 方式三：手动启动
+### 方式四：手动启动
 
 #### 后端
 

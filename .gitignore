@@ -36,6 +36,8 @@ logs/
 # Config - 保留示例配置，忽略实际配置
 backend/config/plugins.json
 config/plugins.json
+config.json
+frontend/.env
 
 # Database
 backend/data/*.db
@@ -73,3 +75,6 @@ htmlcov/
 *.egg
 *.egg-info
 .eggs/
+
+# Runtime
+.running_pids.json
