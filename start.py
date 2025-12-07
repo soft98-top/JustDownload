@@ -89,8 +89,20 @@ def start_backend(config):
         '--log-level', 'INFO'
     ]
     
+    # 创建日志文件
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    backend_log = os.path.join(log_dir, 'backend.log')
+    backend_err = os.path.join(log_dir, 'backend_error.log')
+    
     # 根据操作系统选择启动方式
     is_windows = platform.system() == 'Windows'
+    
+    # 打开日志文件
+    stdout_file = open(backend_log, 'w', encoding='utf-8')
+    stderr_file = open(backend_err, 'w', encoding='utf-8')
     
     if is_windows:
         # Windows: 使用 CREATE_NEW_PROCESS_GROUP
@@ -98,22 +110,24 @@ def start_backend(config):
             cmd,
             cwd='backend',
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stdout=stdout_file,
+            stderr=stderr_file
         )
     else:
         # Linux/Mac: 使用 nohup
         process = subprocess.Popen(
             cmd,
             cwd='backend',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout_file,
+            stderr=stderr_file,
             preexec_fn=os.setpgrp
         )
     
     print(f"  后端 PID: {process.pid}")
     print(f"  监听地址: {backend_config['host']}:{backend_config['port']}")
     print(f"  访问地址: {backend_config['public_url']}")
+    print(f"  日志文件: {backend_log}")
+    print(f"  错误日志: {backend_err}")
     
     return process.pid
 
@@ -128,8 +142,20 @@ def start_frontend(config):
     env['VITE_PORT'] = str(frontend_config['port'])
     env['VITE_HOST'] = frontend_config['host']
     
+    # 创建日志文件
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    frontend_log = os.path.join(log_dir, 'frontend.log')
+    frontend_err = os.path.join(log_dir, 'frontend_error.log')
+    
     # 根据操作系统选择启动方式
     is_windows = platform.system() == 'Windows'
+    
+    # 打开日志文件
+    stdout_file = open(frontend_log, 'w', encoding='utf-8')
+    stderr_file = open(frontend_err, 'w', encoding='utf-8')
     
     if is_windows:
         # Windows
@@ -138,8 +164,8 @@ def start_frontend(config):
             cwd='frontend',
             env=env,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stdout=stdout_file,
+            stderr=stderr_file
         )
     else:
         # Linux/Mac
@@ -147,14 +173,16 @@ def start_frontend(config):
             ['npm', 'run', 'dev'],
             cwd='frontend',
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout_file,
+            stderr=stderr_file,
             preexec_fn=os.setpgrp
         )
     
     print(f"  前端 PID: {process.pid}")
     print(f"  监听地址: {frontend_config['host']}:{frontend_config['port']}")
     print(f"  访问地址: {frontend_config['public_url']}")
+    print(f"  日志文件: {frontend_log}")
+    print(f"  错误日志: {frontend_err}")
     
     return process.pid
 

@@ -32,15 +32,17 @@ python start.py
 
 **管理命令:**
 ```bash
-python status.py  # 查看服务状态
-python stop.py    # 停止所有服务
+python status.py    # 查看服务状态
+python stop.py      # 停止所有服务
+python logs.py all  # 查看日志
+python diagnose.py  # 运行诊断
 ```
 
 **或使用便捷脚本:**
-- Windows: `start.bat`, `stop.bat`, `status.bat`
-- Linux/Mac: `./start.sh`, `./stop.sh`, `./status.sh`
+- Windows: `start.bat`, `stop.bat`, `status.bat`, `logs.bat`, `diagnose.bat`
+- Linux/Mac: `./start.sh`, `./stop.sh`, `./status.sh`, `./logs.sh`, `./diagnose.sh`
 
-📖 详细说明: [快速开始指南](QUICKSTART_NEW.md) | [部署指南](README_DEPLOYMENT.md)
+📖 详细说明: [快速开始指南](QUICKSTART_NEW.md) | [部署指南](README_DEPLOYMENT.md) | [故障排查](TROUBLESHOOTING.md)
 
 ### 方式二：Docker 部署
 

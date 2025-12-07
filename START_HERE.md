@@ -99,24 +99,46 @@ python stop.py
 
 ## 遇到问题？
 
-### 端口被占用
+### 运行诊断工具
 
-修改 `config.json` 中的端口号，然后重启服务。
+```bash
+python diagnose.py
+```
 
-### 前端无法连接后端
-
-检查 `config.json` 中的 `frontend.api_url` 是否正确。
-
-### 服务启动失败
-
-1. 确保 Python 3.8+ 和 Node.js 16+ 已安装
-2. 检查端口是否被占用
-3. 查看错误信息
+这会检查所有依赖和配置，帮助你快速定位问题。
 
 ### 查看日志
 
-- 后端日志: `backend/logs/`
-- 前端日志: 浏览器控制台 (F12)
+```bash
+# 查看前端错误日志（最常用）
+python logs.py frontend-error
+
+# 查看后端错误日志
+python logs.py backend-error
+
+# 查看所有日志
+python logs.py all
+```
+
+### 常见问题
+
+**端口被占用**
+- 修改 `config.json` 中的端口号，然后重启服务
+
+**前端无法连接后端**
+- 检查 `config.json` 中的 `frontend.api_url` 是否正确
+- 确保后端服务正在运行: `python status.py`
+
+**前端服务启动后立即停止**
+- 查看前端错误日志: `python logs.py frontend-error`
+- 检查 Node.js 和 npm 是否正确安装
+- 检查前端依赖是否安装: `cd frontend && npm install`
+
+**服务启动失败**
+1. 运行诊断: `python diagnose.py`
+2. 确保 Python 3.8+ 和 Node.js 16+ 已安装
+3. 检查端口是否被占用
+4. 查看错误日志
 
 ## 下一步
 

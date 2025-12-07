@@ -78,3 +78,7 @@ htmlcov/
 
 # Runtime
 .running_pids.json
+logs/backend.log
+logs/backend_error.log
+logs/frontend.log
+logs/frontend_error.log

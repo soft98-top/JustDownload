@@ -183,8 +183,24 @@ A: 检查 `frontend.api_url` 是否正确，必须是浏览器能访问到的地
 ### Q: 如何查看日志？
 
 A: 
-- 后端日志: `backend/logs/`
-- 前端日志: 浏览器控制台（F12）
+```bash
+# 查看前端日志
+python logs.py frontend
+
+# 查看前端错误日志
+python logs.py frontend-error
+
+# 查看后端日志
+python logs.py backend
+
+# 查看所有日志
+python logs.py all
+```
+
+或者直接查看日志文件：
+- 后端日志: `logs/backend.log` 和 `logs/backend_error.log`
+- 前端日志: `logs/frontend.log` 和 `logs/frontend_error.log`
+- 浏览器日志: 浏览器控制台（F12）
 
 ### Q: 服务启动失败？
 
