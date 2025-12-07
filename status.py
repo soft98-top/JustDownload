@@ -41,10 +41,21 @@ def check_process(pid):
             return str(pid) in result.stdout
         else:
             # Linux/Mac: 检查进程是否存在
-            # 使用 /proc 文件系统（更可靠）
-            if os.path.exists(f'/proc/{pid}'):
-                return True
-            # 备用方法：使用 kill -0
+            # 方法1: 使用 /proc 文件系统（最可靠）
+            proc_path = f'/proc/{pid}'
+            if os.path.exists(proc_path):
+                # 进一步检查是否是僵尸进程
+                try:
+                    with open(f'{proc_path}/stat', 'r') as f:
+                        stat = f.read()
+                        # 检查进程状态，Z 表示僵尸进程
+                        if ' Z ' not in stat and ' Z)' not in stat:
+                            return True
+                except:
+                    # 如果无法读取状态，假设进程存在
+                    return True
+            
+            # 方法2: 使用 kill -0（备用）
             try:
                 os.kill(pid, 0)
                 return True
@@ -53,13 +64,38 @@ def check_process(pid):
             except PermissionError:
                 # 进程存在但没有权限，说明进程在运行
                 return True
+            
+            return False
     except Exception as e:
-        # 如果出错，尝试备用方法
+        # 如果出错，尝试最后的备用方法
         try:
             os.kill(pid, 0)
             return True
         except:
             return False
+
+def check_process_tree(pid):
+    """检查进程及其子进程"""
+    try:
+        is_windows = platform.system() == 'Windows'
+        
+        if is_windows:
+            return check_process(pid)
+        else:
+            # Linux: 检查进程树
+            import subprocess
+            result = subprocess.run(
+                ['pgrep', '-P', str(pid)],
+                capture_output=True,
+                text=True
+            )
+            # 如果有子进程，说明父进程肯定在运行
+            if result.stdout.strip():
+                return True
+            # 否则检查进程本身
+            return check_process(pid)
+    except:
+        return check_process(pid)
 
 def main():
     """主函数"""
@@ -80,7 +116,8 @@ def main():
     # 检查后端
     if 'backend' in pids:
         backend_pid = pids['backend']
-        status = "运行中 ✓" if check_process(backend_pid) else "已停止 ✗"
+        is_running = check_process_tree(backend_pid)
+        status = "运行中 ✓" if is_running else "已停止 ✗"
         print(f"  后端服务: {status} (PID: {backend_pid})")
         if config:
             print(f"    地址: {config['backend']['public_url']}")
@@ -88,10 +125,22 @@ def main():
     # 检查前端
     if 'frontend' in pids:
         frontend_pid = pids['frontend']
-        status = "运行中 ✓" if check_process(frontend_pid) else "已停止 ✗"
+        is_running = check_process_tree(frontend_pid)
+        status = "运行中 ✓" if is_running else "已停止 ✗"
         print(f"  前端服务: {status} (PID: {frontend_pid})")
         if config:
             print(f"    地址: {config['frontend']['public_url']}")
+        
+        # 如果显示已停止，但日志显示在运行，给出提示
+        if not is_running:
+            # 检查日志文件最后修改时间
+            frontend_log = 'logs/frontend.log'
+            if os.path.exists(frontend_log):
+                import time
+                mtime = os.path.getmtime(frontend_log)
+                age = time.time() - mtime
+                if age < 60:  # 最近1分钟有日志
+                    print(f"    提示: 日志显示服务可能正在运行，请检查实际端口")
     
     print("\n" + "=" * 50)
 

@@ -42,6 +42,15 @@ python diagnose.py  # 运行诊断
 - Windows: `start.bat`, `stop.bat`, `status.bat`, `logs.bat`, `diagnose.bat`
 - Linux/Mac: `./start.sh`, `./stop.sh`, `./status.sh`, `./logs.sh`, `./diagnose.sh`
 
+**Linux/Mac 推荐使用 nohup 模式（更可靠）:**
+```bash
+chmod +x start_nohup.sh stop_nohup.sh status_nohup.sh
+./start_nohup.sh  # 启动
+./status_nohup.sh # 状态
+./stop_nohup.sh   # 停止
+```
+📖 详细说明: [Nohup 模式指南](NOHUP_MODE.md)
+
 📖 详细说明: [快速开始指南](QUICKSTART_NEW.md) | [部署指南](README_DEPLOYMENT.md) | [故障排查](TROUBLESHOOTING.md)
 
 ### 方式二：Docker 部署
