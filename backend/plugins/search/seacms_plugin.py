@@ -201,15 +201,21 @@ class SeaCMSSearchPlugin(SearchPlugin):
         if not api_url:
             return []
         
-        timeout = self.config.get('timeout', 30)
+        timeout_value = self.config.get('timeout', 30)
+        # 确保timeout是数字类型
+        try:
+            timeout_value = float(timeout_value)
+        except (ValueError, TypeError):
+            timeout_value = 30.0
+        
         use_proxy = self.config.get('use_proxy', False)
         proxy_url = self.config.get('proxy_url', '')
         
         # 配置httpx客户端（trust_env=False避免使用系统代理）
         if use_proxy and proxy_url:
-            client = httpx.AsyncClient(timeout=timeout, follow_redirects=True, proxy=proxy_url)
+            client = httpx.AsyncClient(timeout=timeout_value, follow_redirects=True, proxy=proxy_url)
         else:
-            client = httpx.AsyncClient(timeout=timeout, follow_redirects=True, trust_env=False)
+            client = httpx.AsyncClient(timeout=timeout_value, follow_redirects=True, trust_env=False)
         
         try:
             async with client:
