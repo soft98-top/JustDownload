@@ -3,19 +3,22 @@
     <div class="card">
       <div class="header">
         <h2>下载管理</h2>
-        <div class="header-actions">
+        <div class="header-controls">
           <select v-model="selectedPlatform" @change="loadDownloads" class="platform-select">
             <option value="all">全部平台</option>
             <option v-for="plugin in enabledDownloadPlugins" :key="plugin.name" :value="plugin.name">
               {{ getPlatformDisplayName(plugin.name) }}
             </option>
           </select>
-          <button @click="showAddDialog = true" class="btn btn-success">
-            + 新增下载
-          </button>
-          <button @click="refreshDownloads" class="btn btn-primary" :disabled="loading">
-            {{ loading ? '刷新中...' : '刷新' }}
-          </button>
+          <div class="header-actions">
+            <button @click="showAddDialog = true" class="btn btn-success">
+              ➕ 新增下载
+            </button>
+            <button @click="refreshDownloads" class="btn btn-primary" :disabled="loading">
+              <span v-if="loading">🔄 刷新中...</span>
+              <span v-else>🔄 刷新</span>
+            </button>
+          </div>
         </div>
       </div>
       
@@ -315,30 +318,49 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header h2 {
   margin: 0;
+  flex-shrink: 0;
+}
+
+.header-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.75rem;
+  flex-direction: row;
+  gap: 0.5rem;
   align-items: center;
 }
 
 .platform-select {
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   background: white;
   cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.platform-select:hover {
+  border-color: #3498db;
 }
 
 .platform-select:focus {
   outline: none;
   border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 .loading,
@@ -528,23 +550,82 @@ export default {
   background: #27ae60;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .btn-success:hover {
   background: #229954;
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-success:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(39, 174, 96, 0.2);
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(52, 152, 219, 0.2);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-warning {
   background: #f39c12;
   color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .btn-warning:hover {
   background: #e67e22;
+  transform: translateY(-1px);
+}
+
+.btn-warning:active {
+  transform: translateY(0);
 }
 
 /* 对话框样式 */
@@ -642,5 +723,26 @@ export default {
   gap: 0.75rem;
   padding: 1.5rem;
   border-top: 1px solid #e0e0e0;
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
 }
 </style>

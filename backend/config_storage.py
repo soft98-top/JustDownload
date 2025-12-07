@@ -81,6 +81,12 @@ class ConfigStorage:
             del self._config[key]
             self._save()
             logger.info(f"配置已删除: {key}")
+    
+    def reload(self):
+        """重新加载配置文件"""
+        logger.info("重新加载配置文件...")
+        self._load()
+        logger.info(f"配置重新加载完成: {len(self._config)} 个插件")
 
 
 # 全局配置存储实例

@@ -1,4 +1,7 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-pydantic==2.5.0
-httpx==0.25.1
+# 核心依赖 - 项目运行必需
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
+httpx>=0.25.0
+
+# 注意: 插件特定的依赖请在各插件目录的 requirements.txt 中定义

@@ -1,64 +1,59 @@
-# 模块化下载系统
+# JustDownload - 模块化下载系统
 
-一个基于插件架构的 Web 下载系统，支持自定义搜索和下载插件。
+一个基于插件架构的视频搜索和下载系统。
 
 ## 功能特性
 
-- 🔌 **插件化架构**：搜索插件和下载插件完全独立
-- 🔍 **多源搜索**：支持 YouTube 等多个视频平台搜索
-- ⬇️ **多协议下载**：支持 HTTP/HTTPS、m3u8、磁力链接等
-- ⚙️ **灵活配置**：每个插件都有独立的配置选项
-- 🌐 **Web 界面**：现代化的 Vue 3 前端界面
-
-## 项目结构
-
-```
-├── backend/                 # 后端服务
-│   ├── plugins/            # 插件目录
-│   │   ├── search/         # 搜索插件
-│   │   │   └── youtube_plugin.py
-│   │   └── download/       # 下载插件
-│   │       ├── metube_plugin.py
-│   │       └── qbittorrent_plugin.py
-│   ├── base_plugin.py      # 插件基类
-│   ├── models.py           # 数据模型
-│   ├── plugin_manager.py   # 插件管理器
-│   ├── main.py             # FastAPI 应用
-│   └── requirements.txt
-└── frontend/               # 前端应用
-    ├── src/
-    │   ├── views/          # 页面组件
-    │   │   ├── Search.vue
-    │   │   ├── Downloads.vue
-    │   │   └── Settings.vue
-    │   ├── App.vue
-    │   └── main.js
-    ├── index.html
-    ├── package.json
-    └── vite.config.js
-```
+- 🔌 插件化架构：支持搜索、下载、解析器插件
+- 🔍 多平台搜索：支持多个视频平台的搜索
+- ⬇️ 多种下载方式：支持HTTP、M3U8、磁力链接等
+- 🎯 动态插件管理：在线安装、卸载插件
+- ⚡ 插件热加载：安装/删除插件无需重启服务
+- ⚙️ 配置导入导出：一键备份和恢复所有配置
+- 🌐 Web界面：友好的前端操作界面
 
 ## 快速开始
 
-### 后端启动
+### 方式一：Docker 部署（推荐）
+
+使用 Docker Compose 一键部署：
+
+```bash
+docker-compose up -d
+```
+
+访问应用：
+- 前端: http://localhost
+- 后端 API: http://localhost:8000
+
+详细说明请查看 [Docker 部署指南](DOCKER_DEPLOYMENT.md)
+
+### 方式二：一键启动脚本
+
+**Linux/Mac:**
+```bash
+chmod +x install_dependencies.sh start_all.sh
+./install_dependencies.sh  # 首次运行
+./start_all.sh            # 启动服务
+```
+
+**Windows:**
+```cmd
+install_dependencies.bat  # 首次运行
+start_all.bat            # 启动服务
+```
+
+### 方式三：手动启动
+
+#### 后端
 
 ```bash
 cd backend
 pip install -r requirements.txt
-
-# 普通模式
 python main.py
-
-# 详细日志模式（推荐调试时使用）
-python main.py --verbose
-
-# 指定日志级别
-python main.py --log-level DEBUG
 ```
 
-后端将在 http://localhost:8000 启动
-
-### 前端启动
+#### 前端
 
 ```bash
 cd frontend
@@ -66,105 +61,55 @@ npm install
 npm run dev
 ```
 
-前端将在 http://localhost:3000 启动
+## 插件系统
 
-### 日志系统
+### 插件类型
 
-系统支持详细的日志记录，便于调试和问题排查：
+1. **搜索插件** - 从各个平台搜索视频
+2. **下载插件** - 处理不同协议的下载任务
+3. **解析器插件** - 解析视频播放地址
 
-- **日志级别**: DEBUG, INFO, WARNING, ERROR, CRITICAL
-- **彩色输出**: 不同级别使用不同颜色
-- **文件记录**: 自动保存到 `logs/` 目录
-- **详细模式**: 显示函数名和行号
+### 插件自动发现
 
-详见 [日志使用指南](LOGGING_GUIDE.md)
+系统启动时会自动扫描插件目录，加载所有符合规范的插件：
+- 无需在代码中手动注册插件
+- 插件文件放入对应目录即可自动加载
+- 支持零配置部署
 
-## 已实现的插件
+### 插件管理
 
-### 搜索插件
+- 所有插件默认禁用，需要在设置中手动启用
+- 支持在线安装插件（输入插件URL）
+- 支持删除已安装的插件
+- **支持插件热加载/热卸载，无需重启服务**
+- 每个插件可以有独立的依赖文件
 
-- **YouTube**: 使用 YouTube Data API v3 搜索视频
-- **SeaCMS**: 海洋CMS资源采集插件，支持多资源站并发搜索，自动过滤m3u8资源
+## 配置管理
 
-### 下载插件
+在设置界面可以：
+- 导出所有配置为JSON文件
+- 导入配置文件快速恢复设置
+- 管理插件的启用/禁用状态
 
-- **Metube**: 支持 YouTube、m3u8 等格式下载
-- **qBittorrent**: 支持 BT 种子和磁力链接下载
+## 项目结构
 
-## 如何开发新插件
-
-### 创建搜索插件
-
-```python
-from base_plugin import SearchPlugin
-from models import ConfigField, SearchResult
-
-class MySearchPlugin(SearchPlugin):
-    @property
-    def name(self) -> str:
-        return "my_plugin"
-    
-    @property
-    def version(self) -> str:
-        return "1.0.0"
-    
-    @property
-    def description(self) -> str:
-        return "我的搜索插件"
-    
-    def get_config_schema(self) -> List[ConfigField]:
-        return [
-            ConfigField(
-                name="api_key",
-                label="API 密钥",
-                type="password",
-                required=True
-            )
-        ]
-    
-    async def search(self, keyword: str, **kwargs) -> List[SearchResult]:
-        # 实现搜索逻辑
-        pass
-    
-    async def get_video_info(self, url: str) -> SearchResult:
-        # 实现获取视频信息逻辑
-        pass
+```
+JustDownload/
+├── backend/              # 后端服务
+│   ├── plugins/         # 插件目录
+│   │   ├── search/      # 搜索插件
+│   │   ├── download/    # 下载插件
+│   │   └── parser/      # 解析器插件
+│   ├── config/          # 配置文件
+│   └── requirements.txt # 核心依赖
+├── frontend/            # 前端界面
+└── README.md
 ```
 
-### 创建下载插件
+## 开发插件
 
-```python
-from base_plugin import DownloadPlugin
-from models import ConfigField, DownloadTask
+参考 `backend/plugins/search/plugin_template.py` 创建新插件。
 
-class MyDownloadPlugin(DownloadPlugin):
-    @property
-    def name(self) -> str:
-        return "my_downloader"
-    
-    @property
-    def supported_protocols(self) -> List[str]:
-        return ["http", "https"]
-    
-    # 实现其他必需方法...
-```
+## License
 
-## API 文档
-
-启动后端后访问 http://localhost:8000/docs 查看完整的 API 文档。
-
-## 配置说明
-
-在 Web 界面的"设置"页面可以配置各个插件的参数，例如：
-
-- YouTube API 密钥
-- Metube 服务地址
-- qBittorrent 连接信息
-- 代理设置
-- 下载路径
-
-## 技术栈
-
-- **后端**: FastAPI + Python 3.8+
-- **前端**: Vue 3 + Vite
-- **HTTP 客户端**: httpx (异步)
+MIT

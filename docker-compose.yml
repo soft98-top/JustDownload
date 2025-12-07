@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: justdownload-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/config:/app/config
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+      - ./backend/plugins:/app/plugins
+    environment:
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    networks:
+      - justdownload-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: justdownload-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - justdownload-network
+
+networks:
+  justdownload-network:
+    driver: bridge
+
+volumes:
+  backend-config:
+  backend-data:
+  backend-logs:

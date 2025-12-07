@@ -38,12 +38,25 @@
     </div>
 
     <div v-if="loading" class="card">
-      <p>搜索中...</p>
+      <div class="search-progress">
+        <p>{{ searchProgressMessage || '搜索中...' }}</p>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: searchProgress + '%' }"></div>
+        </div>
+        <p class="progress-text">{{ searchProgress }}%</p>
+      </div>
     </div>
 
     <div v-if="results.length > 0" class="results">
       <div v-for="result in results" :key="result.url" class="card result-item">
-        <img v-if="result.thumbnail" :src="result.thumbnail" :alt="result.title" />
+        <img 
+          v-if="result.thumbnail" 
+          :src="result.thumbnail" 
+          :alt="result.title"
+          @click="previewImage(result.thumbnail, result.title)"
+          class="thumbnail-clickable"
+          title="点击查看大图"
+        />
         <div class="result-info">
           <h3>{{ result.title }}</h3>
           <p class="result-meta">
@@ -78,6 +91,14 @@
       @close="showDownloadDialog = false"
       @download="handleDownload"
     />
+    
+    <!-- 图片预览 -->
+    <ImagePreview
+      :show="showImagePreview"
+      :imageUrl="previewImageUrl"
+      :imageAlt="previewImageAlt"
+      @close="showImagePreview = false"
+    />
   </div>
 </template>
 
@@ -85,12 +106,14 @@
 import axios from 'axios'
 import DownloadDialog from '../components/DownloadDialog.vue'
 import VideoDetailDialog from '../components/VideoDetailDialog.vue'
+import ImagePreview from '../components/ImagePreview.vue'
 import toast from '../utils/toast'
 
 export default {
   components: {
     DownloadDialog,
-    VideoDetailDialog
+    VideoDetailDialog,
+    ImagePreview
   },
   created() {
     this.$toast = toast
@@ -105,7 +128,14 @@ export default {
       loading: false,
       showDownloadDialog: false,
       showVideoDetail: false,
-      currentResult: null
+      currentResult: null,
+      currentTaskId: null,
+      pollingInterval: null,
+      searchProgress: 0,
+      searchProgressMessage: '',
+      showImagePreview: false,
+      previewImageUrl: '',
+      previewImageAlt: ''
     }
   },
   computed: {
@@ -117,6 +147,10 @@ export default {
   async mounted() {
     await this.loadPlugins()
     this.loadSearchCache()
+    this.checkPendingTask()
+  },
+  beforeUnmount() {
+    this.stopPolling()
   },
   methods: {
     async loadPlugins() {
@@ -133,6 +167,16 @@ export default {
       } catch (error) {
         console.error('加载插件失败:', error)
         this.$toast.error('加载插件失败', error.message)
+      }
+    },
+    checkPendingTask() {
+      // 检查是否有未完成的搜索任务
+      const taskId = localStorage.getItem('pending_search_task')
+      if (taskId) {
+        console.log('发现未完成的搜索任务:', taskId)
+        this.currentTaskId = taskId
+        this.loading = true
+        this.startPolling()
       }
     },
     loadSearchCache() {
@@ -176,8 +220,83 @@ export default {
     clearResults() {
       this.results = []
       this.keyword = ''
+      this.stopPolling()
       localStorage.removeItem('search_cache')
+      localStorage.removeItem('pending_search_task')
       this.$toast.info('已清除搜索结果')
+    },
+    startPolling() {
+      // 停止之前的轮询
+      this.stopPolling()
+      
+      // 立即查询一次
+      this.pollTaskStatus()
+      
+      // 每2秒轮询一次
+      this.pollingInterval = setInterval(() => {
+        this.pollTaskStatus()
+      }, 2000)
+    },
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval)
+        this.pollingInterval = null
+      }
+    },
+    async pollTaskStatus() {
+      if (!this.currentTaskId) return
+      
+      try {
+        const response = await axios.get(`/api/search/task/${this.currentTaskId}`)
+        const task = response.data
+        
+        // 更新进度
+        this.searchProgress = task.progress || 0
+        this.searchProgressMessage = task.progress_message || ''
+        
+        if (task.status === 'completed') {
+          // 搜索完成
+          this.results = task.results || []
+          this.loading = false
+          this.stopPolling()
+          
+          // 清除待处理任务标记
+          localStorage.removeItem('pending_search_task')
+          
+          // 保存搜索结果到缓存
+          this.saveSearchCache()
+          
+          if (this.results.length === 0) {
+            this.$toast.info('未找到结果', '请尝试其他关键词')
+          } else {
+            this.$toast.success(`找到 ${this.results.length} 个结果`)
+          }
+          
+          this.currentTaskId = null
+        } else if (task.status === 'failed') {
+          // 搜索失败
+          this.loading = false
+          this.stopPolling()
+          localStorage.removeItem('pending_search_task')
+          
+          const errorMsg = task.error || '搜索失败'
+          this.$toast.error('搜索失败', errorMsg)
+          
+          this.currentTaskId = null
+        }
+        // 如果是 pending 或 running，继续轮询
+        
+      } catch (error) {
+        console.error('查询任务状态失败:', error)
+        // 如果任务不存在（404），停止轮询
+        if (error.response?.status === 404) {
+          this.loading = false
+          this.stopPolling()
+          localStorage.removeItem('pending_search_task')
+          this.$toast.error('搜索任务不存在或已过期')
+          this.currentTaskId = null
+        }
+      }
     },
     async search() {
       if (!this.selectedPlugin || !this.keyword) {
@@ -186,24 +305,32 @@ export default {
       }
 
       this.loading = true
+      this.results = []
+      this.searchProgress = 0
+      this.searchProgressMessage = '创建搜索任务...'
+      
       try {
-        const response = await axios.get(`/api/search/${this.selectedPlugin}`, {
-          params: { keyword: this.keyword }
+        // 创建异步搜索任务
+        const response = await axios.post('/api/search/async', null, {
+          params: {
+            plugin_name: this.selectedPlugin,
+            keyword: this.keyword
+          }
         })
-        this.results = response.data.results
         
-        // 保存搜索结果到缓存
-        this.saveSearchCache()
+        this.currentTaskId = response.data.task_id
         
-        if (this.results.length === 0) {
-          this.$toast.info('未找到结果', '请尝试其他关键词')
-        } else {
-          this.$toast.success(`找到 ${this.results.length} 个结果`)
-        }
+        // 保存任务ID到 localStorage
+        localStorage.setItem('pending_search_task', this.currentTaskId)
+        
+        // 开始轮询任务状态
+        this.startPolling()
+        
+        this.$toast.info('搜索任务已创建', '正在后台执行...')
+        
       } catch (error) {
-        console.error('搜索失败:', error)
+        console.error('创建搜索任务失败:', error)
         this.$toast.error('搜索失败', error.response?.data?.detail || error.message)
-      } finally {
         this.loading = false
       }
     },
@@ -214,6 +341,11 @@ export default {
     openDownloadDialog(result) {
       this.currentResult = result
       this.showDownloadDialog = true
+    },
+    previewImage(imageUrl, imageAlt) {
+      this.previewImageUrl = imageUrl
+      this.previewImageAlt = imageAlt
+      this.showImagePreview = true
     },
     async handleDownload(downloadData) {
       try {
@@ -281,6 +413,21 @@ export default {
   border-radius: 4px;
 }
 
+.thumbnail-clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.thumbnail-clickable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.thumbnail-clickable:active {
+  transform: scale(0.98);
+}
+
 .result-info {
   flex: 1;
 }
@@ -332,5 +479,32 @@ export default {
 .btn-sm {
   padding: 0.4rem 0.8rem;
   font-size: 0.85rem;
+}
+
+.search-progress {
+  text-align: center;
+  padding: 1rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  transition: width 0.3s ease;
+  border-radius: 10px;
+}
+
+.progress-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
 }
 </style>

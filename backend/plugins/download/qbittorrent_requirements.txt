@@ -1,0 +1,2 @@
+# qBittorrent插件依赖
+# 无额外依赖，使用核心httpx即可

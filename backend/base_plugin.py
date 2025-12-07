@@ -1,12 +1,64 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
 from models import ConfigField, SearchResult, DownloadTask
+from logger import get_logger
 
-class ParserPlugin(ABC):
-    """视频解析器插件基类"""
+logger = get_logger(__name__)
+
+
+class BasePlugin(ABC):
+    """插件基类，提供通用配置处理方法"""
     
     def __init__(self):
         self.config = {}
+    
+    def _get_config_int(self, key: str, default: int) -> int:
+        """安全地获取整数配置值"""
+        value = self.config.get(key, default)
+        if value == '' or value is None:
+            return default
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            logger.warning(f"[{self.name}] 配置项 {key} 的值 '{value}' 无效，使用默认值 {default}")
+            return default
+    
+    def _get_config_float(self, key: str, default: float) -> float:
+        """安全地获取浮点数配置值"""
+        value = self.config.get(key, default)
+        if value == '' or value is None:
+            return default
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            logger.warning(f"[{self.name}] 配置项 {key} 的值 '{value}' 无效，使用默认值 {default}")
+            return default
+    
+    def _get_config_bool(self, key: str, default: bool) -> bool:
+        """安全地获取布尔配置值"""
+        value = self.config.get(key, default)
+        if value == '' or value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ('true', '1', 'yes', 'on')
+        return bool(value)
+    
+    def _get_config_str(self, key: str, default: str) -> str:
+        """安全地获取字符串配置值"""
+        value = self.config.get(key, default)
+        if value is None:
+            return default
+        return str(value)
+    
+    def set_config(self, config: Dict[str, Any]):
+        """设置配置"""
+        self.config = config
+
+
+class ParserPlugin(BasePlugin):
+    """视频解析器插件基类"""
     
     @property
     @abstractmethod
@@ -30,9 +82,6 @@ class ParserPlugin(ABC):
     def get_config_schema(self) -> List[ConfigField]:
         """获取配置字段定义"""
         pass
-    
-    def set_config(self, config: Dict[str, Any]):
-        self.config = config
     
     @abstractmethod
     def parse_url(self, original_url: str) -> List[Dict[str, str]]:
@@ -48,11 +97,8 @@ class ParserPlugin(ABC):
         """
         pass
 
-class SearchPlugin(ABC):
+class SearchPlugin(BasePlugin):
     """搜索插件基类"""
-    
-    def __init__(self):
-        self.config = {}
     
     @property
     @abstractmethod
@@ -77,9 +123,6 @@ class SearchPlugin(ABC):
         """获取配置字段定义"""
         pass
     
-    def set_config(self, config: Dict[str, Any]):
-        self.config = config
-    
     @abstractmethod
     async def search(self, keyword: str, **kwargs) -> List[SearchResult]:
         pass
@@ -88,11 +131,8 @@ class SearchPlugin(ABC):
     async def get_video_info(self, url: str) -> SearchResult:
         pass
 
-class DownloadPlugin(ABC):
+class DownloadPlugin(BasePlugin):
     """下载插件基类"""
-    
-    def __init__(self):
-        self.config = {}
     
     @property
     @abstractmethod
@@ -117,9 +157,6 @@ class DownloadPlugin(ABC):
     @abstractmethod
     def get_config_schema(self) -> List[ConfigField]:
         pass
-    
-    def set_config(self, config: Dict[str, Any]):
-        self.config = config
     
     @abstractmethod
     async def download(self, task: DownloadTask) -> bool:
